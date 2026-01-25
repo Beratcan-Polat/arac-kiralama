@@ -23,7 +23,7 @@ cd mail-service
 if [ ! -d "venv" ]; then
     python3 -m venv venv
     source venv/bin/activate
-    pip install fastapi uvicorn aiosmtplib pydantic python-dotenv
+    pip install fastapi uvicorn aiosmtplib "pydantic[email]" email-validator python-dotenv
 else
     source venv/bin/activate
 fi
