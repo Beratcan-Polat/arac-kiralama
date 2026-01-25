@@ -135,6 +135,47 @@ public class AracServis {
         return aracRepository.save(arac);
     }
 
+    // Güvenli Güncelleme (NULL check ile)
+    public Arac aracGuncelle(Long id, Arac yeniBilgiler) {
+        Arac mevcut = aracRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Araç bulunamadı!"));
+
+        if (yeniBilgiler.getMarka() != null)
+            mevcut.setMarka(yeniBilgiler.getMarka());
+        if (yeniBilgiler.getModel() != null)
+            mevcut.setModel(yeniBilgiler.getModel());
+        if (yeniBilgiler.getYakitTipi() != null)
+            mevcut.setYakitTipi(yeniBilgiler.getYakitTipi());
+        if (yeniBilgiler.getVitesTipi() != null)
+            mevcut.setVitesTipi(yeniBilgiler.getVitesTipi());
+        if (yeniBilgiler.getKasaTipi() != null)
+            mevcut.setKasaTipi(yeniBilgiler.getKasaTipi());
+        if (yeniBilgiler.getAracSinifi() != null)
+            mevcut.setAracSinifi(yeniBilgiler.getAracSinifi());
+        if (yeniBilgiler.getGunlukFiyat() != null)
+            mevcut.setGunlukFiyat(yeniBilgiler.getGunlukFiyat());
+        if (yeniBilgiler.getResimUrl() != null)
+            mevcut.setResimUrl(yeniBilgiler.getResimUrl());
+        if (yeniBilgiler.getDurum() != null)
+            mevcut.setDurum(yeniBilgiler.getDurum()); // Null ise eskisini koru
+        if (yeniBilgiler.getAlisNoktasi() != null)
+            mevcut.setAlisNoktasi(yeniBilgiler.getAlisNoktasi());
+
+        // Diğer alanlar
+        if (yeniBilgiler.getIl() != null)
+            mevcut.setIl(yeniBilgiler.getIl());
+        if (yeniBilgiler.getGunlukKmLimiti() != 0)
+            mevcut.setGunlukKmLimiti(yeniBilgiler.getGunlukKmLimiti());
+        if (yeniBilgiler.getMinYas() != 0)
+            mevcut.setMinYas(yeniBilgiler.getMinYas());
+        if (yeniBilgiler.getMinEhliyetYili() != 0)
+            mevcut.setMinEhliyetYili(yeniBilgiler.getMinEhliyetYili());
+        if (yeniBilgiler.getTeminatTutari() != 0)
+            mevcut.setTeminatTutari(yeniBilgiler.getTeminatTutari());
+
+        return aracRepository.save(mevcut);
+    }
+
     // YENİ: Araç Onaylama
     public void aracOnayla(Long id) {
         if (id == null) {

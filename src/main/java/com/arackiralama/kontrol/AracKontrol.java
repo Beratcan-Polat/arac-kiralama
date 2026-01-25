@@ -37,12 +37,9 @@ public class AracKontrol {
         return ResponseEntity.ok(kaydedilenArac);
     }
 
-    // PUT http://localhost:8080/api/araclar/{id}
     @PutMapping("/{id}")
     public ResponseEntity<Arac> aracGuncelle(@PathVariable Long id, @RequestBody Arac arac) {
-        // ID'yi set et emin olmak için
-        arac.setId(id);
-        Arac guncellenenArac = aracServis.aracKaydet(arac);
+        Arac guncellenenArac = aracServis.aracGuncelle(id, arac);
         return ResponseEntity.ok(guncellenenArac);
     }
 
