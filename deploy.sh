@@ -9,7 +9,7 @@ git pull origin main
 
 # 2. Java Projesini Derle
 echo "Java Derleniyor..."
-./mvnw clean package -DskipTests
+mvn clean package -DskipTests
 
 # 3. Eski Java Sürecini Bul ve Öldür (pidof veya pgrep ile)
 echo "Eski süreç durduruluyor..."
