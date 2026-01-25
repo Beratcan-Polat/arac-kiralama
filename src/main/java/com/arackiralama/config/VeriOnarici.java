@@ -19,39 +19,26 @@ public class VeriOnarici implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("--- VERİ ONARICI BAŞLATILDI ---");
+        System.out.println("--- Veri Onarıcı Başlatıldı ---");
 
-        // Veritabanındaki tüm araçları ham olarak çek
+        // Durumu NULL olan araçları bul ve düzelt
         List<Arac> tumAraclar = aracRepository.findAll();
-
-        int duzeltilenSayisi = 0;
+        boolean degisiklikYapildi = false;
 
         for (Arac arac : tumAraclar) {
-            boolean degisiklikVar = false;
-
-            // 1. Durum NULL ise MUSAIT yap (Listelerde görünmesi için)
             if (arac.getDurum() == null) {
-                System.out.println("ONARILIYOR: Araç ID " + arac.getId() + " durumu NULL bulundu. MUSAIT yapılıyor.");
+                System.out.println("Hatalı Araç Tespit Edildi (ID: " + arac.getId()
+                        + "): Durum NULL. 'MUSAIT' olarak düzeltiliyor...");
                 arac.setDurum(AracDurum.MUSAIT);
-                degisiklikVar = true;
-            }
-
-            // 2. Silindi NULL ise FALSE yap
-            // (boolean primitive ise zaten false olur ama wrapper ise null olabilir,
-            // modelde boolean primitive 'private boolean silindi = false;' gördük, yani
-            // sorun yok.
-            // Ama yine de JPA yüklerken sorun olabilir diye bakıyoruz)
-
-            if (degisiklikVar) {
                 aracRepository.save(arac);
-                duzeltilenSayisi++;
+                degisiklikYapildi = true;
             }
         }
 
-        if (duzeltilenSayisi > 0) {
-            System.out.println("--- VERİ ONARIM TAMAMLANDI: " + duzeltilenSayisi + " araç düzeltildi. ---");
+        if (degisiklikYapildi) {
+            System.out.println("--- Bozuk veriler onarıldı ---");
         } else {
-            System.out.println("--- VERİ ONARIM: Düzeltilecek kayıt bulunamadı. ---");
+            System.out.println("--- Onarılacak veri bulunamadı, her şey yolunda ---");
         }
     }
 }
