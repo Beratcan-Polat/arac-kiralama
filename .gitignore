@@ -1,0 +1,83 @@
+# Java / Spring Boot
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python Virtual Environments
+venv/
+.venv/
+env/
+.env/
+venv.bak/
+app_env/
+
+# React Native / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+*.iml
+.classpath
+.project
+.settings/
+
+# Secrets & Environment Variables (ÖNEMLİ: Şifreleri Github'a atma!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+application.properties
+application-dev.properties
+google-services.json
+GoogleService-Info.plist
+*.keystore
+*.jks

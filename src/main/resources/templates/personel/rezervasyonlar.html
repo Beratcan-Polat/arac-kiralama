@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Rezervasyonlar - Araç Teslimi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+    <div class="container py-5">
+        <a href="/personel/panel" class="btn btn-outline-secondary mb-3"><i class="fa-solid fa-arrow-left"></i> Panele
+            Dön</a>
+
+        <h2 class="mb-4 text-primary fw-bold"><i class="fa-solid fa-calendar-check me-2"></i> Rezervasyon Listesi</h2>
+        <p class="text-muted">Müşterilerin web sitesinden yaptığı rezervasyonları onaylayıp aracı teslim edin.</p>
+
+        <div th:if="${mesaj}" class="alert alert-success alert-dismissible fade show">
+            <i class="fa-solid fa-circle-check me-2"></i> <span th:text="${mesaj}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${bekleyenRezervasyonlar.empty}" class="alert alert-warning">
+            Şu an bekleyen yeni rezervasyon yok.
+        </div>
+
+        <div class="row" th:unless="${bekleyenRezervasyonlar.empty}">
+            <div th:each="rez : ${bekleyenRezervasyonlar}" class="col-md-6 mb-4">
+                <div class="card shadow-sm h-100 border-info">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold" th:text="${rez.arac.marka + ' ' + rez.arac.model}">Araç</span>
+                        <span class="badge bg-white text-info" th:text="${rez.arac.plaka}">PLAKA</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="mb-1 text-muted small">Müşteri</p>
+                                <p class="fw-bold" th:text="${rez.kullanici.ad}">Müşteri Adı</p>
+                            </div>
+                            <div class="col-6 text-end">
+                                <p class="mb-1 text-muted small">Tutar</p>
+                                <p class="fw-bold text-success" th:text="${rez.toplamFiyat + ' ₺'}">2000 ₺</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <small class="text-muted d-block">Alış Tarihi</small>
+                                <span class="fw-bold" th:text="${rez.alisTarihi}">2023-10-10</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">İade Tarihi</small>
+                                <span class="fw-bold" th:text="${rez.iadeTarihi}">2023-10-15</span>
+                            </div>
+                        </div>
+
+                        <form action="/personel/teslim-et" method="post">
+                            <input type="hidden" name="kiralamaId" th:value="${rez.id}">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2"
+                                onclick="return confirm('Müşteri geldi ve aracı teslim alıyor mu?')">
+                                <i class="fa-solid fa-key me-2"></i> Aracı Müşteriye Teslim Et
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

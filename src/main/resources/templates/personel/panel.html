@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Personel Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="d-flex">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar p-3 d-flex flex-column" style="width: 280px; min-height: 100vh; background-color: #2c3e50;">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <i class="fa-solid fa-road fa-2x me-2 text-info"></i>
+                <span class="fs-4 fw-bold">RotaCar</span>
+                <span class="badge bg-success ms-2" style="font-size: 0.6em;">Personel</span>
+            </a>
+            <hr class="text-white">
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="/personel/panel" class="nav-link active bg-success" aria-current="page">
+                        <i class="fa-solid fa-gauge me-2"></i> Genel Bakış
+                    </a>
+                </li>
+                <li class="mt-2">
+                    <a href="/arac-ekle" class="nav-link text-white">
+                        <i class="fa-solid fa-car me-2"></i> Araç Ekle
+                    </a>
+                </li>
+                <li class="mt-2">
+                    <a href="/personel/iade" class="nav-link text-white">
+                        <i class="fa-solid fa-rotate-left me-2"></i> Araç Teslim Al
+                    </a>
+                </li>
+                <li class="mt-2">
+                    <a href="/araclar" class="nav-link text-white">
+                        <i class="fa-solid fa-list me-2"></i> Araç Listesi
+                    </a>
+                </li>
+                <li class="mt-2">
+                    <a href="/personel/rezervasyonlar" class="nav-link text-white">
+                        <i class="fa-solid fa-calendar-days me-2"></i> Rezervasyonlar
+                    </a>
+                </li>
+                <!-- Kullanıcılar menüsü kaldırıldı -->
+            </ul>
+            <hr class="text-white">
+            <div class="dropdown">
+                <a href="/cikis"
+                    class="d-flex align-items-center text-white text-decoration-none p-2 bg-danger rounded justify-content-center">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i> <strong>Çıkış Yap</strong>
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="container-fluid p-4 bg-light">
+            <h2 class="mb-4 text-secondary border-bottom pb-2">Hoşgeldiniz, Çalışma Arkadaşım 👋</h2>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-primary text-white h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1 opacity-75">Sistemdeki Araçlar</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${toplamArac}">12</h2>
+                                </div>
+                                <i class="fa-solid fa-car fa-3x opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1 opacity-75">Aktif Kiralamalar</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${aktifKiralama}">5</h2>
+                                </div>
+                                <i class="fa-solid fa-calendar-check fa-3x opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-dark h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1 opacity-75">Bakım / Servis</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${bakimSayisi}">2</h2>
+                                </div>
+                                <i class="fa-solid fa-wrench fa-3x opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Ciro Kartı Kaldırıldı -->
+            </div>
+
+            <div class="row mb-4">
+                <!-- Onay Bekleyen Araçlar (Personel Görüşü) -->
+                <div class="col-12" th:if="${!onayBekleyenAraclar.empty}">
+                    <div class="card border-warning shadow-sm">
+                        <div
+                            class="card-body d-flex align-items-center justify-content-between bg-warning bg-opacity-10">
+                            <div>
+                                <h6 class="fw-bold text-warning mb-1"><i class="fa-solid fa-hourglass-half me-2"></i>
+                                    Onay Bekleyen Araçlarınız Var</h6>
+                                <p class="mb-0 small text-secondary">
+                                    <span th:text="${onayBekleyenAraclar.size()}">5</span> adet araç yönetici onayı
+                                    bekliyor. Onaylanana kadar müşteri listesinde görünmeyecekler.
+                                </p>
+                            </div>
+                            <span class="badge bg-warning text-dark">İşlemde</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-white fw-bold py-3">
+                            <i class="fa-solid fa-bolt text-warning me-2"></i> Hızlı İşlemler
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">Müşteri araç iadesi veya yeni araç girişi işlemlerini buradan
+                                hızlıca yapabilirsiniz.</p>
+                            <div class="d-flex gap-3">
+                                <a href="/personel/rezervasyonlar"
+                                    class="btn btn-outline-info fw-bold text-uppercase px-4 py-3">
+                                    <i class="fa-solid fa-calendar-check fa-lg mb-2 d-block"></i> Rezervasyonlar
+                                </a>
+                                <a href="/personel/iade" class="btn btn-outline-dark fw-bold text-uppercase px-4 py-3">
+                                    <i class="fa-solid fa-rotate-left fa-lg mb-2 d-block"></i> Teslim Al (İade)
+                                </a>
+                                <a href="/arac-ekle" class="btn btn-outline-primary fw-bold text-uppercase px-4 py-3">
+                                    <i class="fa-solid fa-plus fa-lg mb-2 d-block"></i> Yeni Araç Ekle
+                                </a>
+                                <a href="/araclar" class="btn btn-outline-success fw-bold text-uppercase px-4 py-3">
+                                    <i class="fa-solid fa-magnifying-glass fa-lg mb-2 d-block"></i> Araç Listesi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card shadow-sm border-0 bg-info text-white">
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-bullhorn me-2"></i> Duyurular</h5>
+
+                            <div th:if="${duyuruListesi.empty}" class="text-center py-3"
+                                style="color: rgba(255,255,255,0.7);">
+                                <small>Henüz duyuru yok.</small>
+                            </div>
+
+                            <div th:each="duyuru : ${duyuruListesi}" class="mb-3 pb-3 border-bottom border-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold" th:text="${duyuru.baslik}">Başlık</span>
+                                    <span class="badge bg-light text-dark" style="font-size: 0.6em;"
+                                        th:text="${#temporals.format(duyuru.tarih, 'dd.MM HH:mm')}">Tarih</span>
+                                </div>
+                                <p class="small mb-0" style="color: rgba(255,255,255,0.9);" th:text="${duyuru.icerik}">
+                                    İçerik...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

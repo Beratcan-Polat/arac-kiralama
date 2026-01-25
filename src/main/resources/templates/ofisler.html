@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <title>Ofislerimiz - RotaCar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 10px;
+        }
+
+        .office-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm"
+        style="background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/araclar">
+                <i class="fa-solid fa-road me-2 text-info"></i>RotaCar
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/panel"><i class="fa-solid fa-gauge me-1"></i> Admin
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('PERSONEL')">
+                        <a class="nav-link" href="/personel/panel"><i class="fa-solid fa-gauge me-1"></i>
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/arac-ekle"><i class="fa-solid fa-plus me-1"></i> Araç Ekle</a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/araclar"><i class="fa-solid fa-list me-1"></i> Araçlar</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/kiralamalarim"><i class="fa-solid fa-clock-rotate-left me-1"></i>
+                            Kiralamalarım</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link active" href="/ofisler"><i class="fa-solid fa-building me-1"></i>
+                            Ofislerimiz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ai-asistan">
+                            <i class="fa-solid fa-robot"></i> AI Asistan
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a href="/cikis" class="btn btn-light btn-sm text-primary fw-bold">Çıkış Yap</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h2 class="fw-bold text-secondary mb-4"><i class="fa-solid fa-location-dot text-danger me-2"></i> Ofislerimiz
+        </h2>
+
+        <!-- İl Filtreleme -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-filter me-2 text-primary"></i>İl
+                            Seç</label>
+                        <select id="cityFilter" class="form-select form-select-lg">
+                            <option value="">-- Tüm İller --</option>
+                            <option value="İstanbul">İstanbul</option>
+                            <option value="Ankara">Ankara</option>
+                            <option value="İzmir">İzmir</option>
+                            <option value="Antalya">Antalya</option>
+                            <option value="Bursa">Bursa</option>
+                            <option value="Adana">Adana</option>
+                            <option value="Adıyaman">Adıyaman</option>
+                            <option value="Afyonkarahisar">Afyonkarahisar</option>
+                            <option value="Ağrı">Ağrı</option>
+                            <option value="Aksaray">Aksaray</option>
+                            <option value="Amasya">Amasya</option>
+                            <option value="Ardahan">Ardahan</option>
+                            <option value="Artvin">Artvin</option>
+                            <option value="Aydın">Aydın</option>
+                            <option value="Balıkesir">Balıkesir</option>
+                            <option value="Bartın">Bartın</option>
+                            <option value="Batman">Batman</option>
+                            <option value="Bayburt">Bayburt</option>
+                            <option value="Bilecik">Bilecik</option>
+                            <option value="Bingöl">Bingöl</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8 mt-3 mt-md-0">
+                        <p class="mb-0 text-muted"><i class="fa-solid fa-info-circle me-2"></i><span
+                                id="officeCount">20</span> şube görüntüleniyor</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Harita -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Ofis Listesi -->
+        <div class="row">
+            <!-- İstanbul Havalimanı -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>İstanbul
+                            Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Tayakadın, İstanbul
+                            Havalimanı, 34283 Arnavutköy/İstanbul</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 212 555 01 01</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=41.2619,28.7419" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarifi Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ankara Esenboğa -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>Ankara
+                            Esenboğa Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Balıkhisar, Esenboğa
+                            Havalimanı, 06780 Çubuk/Ankara</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 312 555 02 02</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=40.1281,32.9951" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarifi Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İzmir Adnan Menderes -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>İzmir Adnan
+                            Menderes Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Dokuz Eylül, 35425
+                            Gaziemir/İzmir</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 232 555 03 03</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=38.2924,27.1569" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarifi Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Antalya Havalimanı -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>Antalya
+                            Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Antalya Havalimanı,
+                            07230 Muratpaşa/Antalya</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 242 555 04 04</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=36.8987,30.8005" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarifi Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bursa -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>Bursa
+                            Yenişehir Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Yenişehir, Bursa</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 224 555 05 05</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=40.2331,29.5625" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarif i Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adana -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 office-card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold"><i class="fa-solid fa-building text-primary me-2"></i>Adana
+                            Şakirpaşa Havalimanı</h5>
+                        <p class="text-muted mb-2"><i class="fa-solid fa-location-dot me-2"></i>Şakirpaşa, Adana</p>
+                        <p class="text-muted mb-3"><i class="fa-solid fa-phone me-2"></i>+90 322 555 06 06</p>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=36.9822,35.2804" target="_blank"
+                            class="btn btn-success w-100 fw-bold">
+                            <i class="fa-solid fa-route me-2"></i>Yol Tarifi Al
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet.js Script -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Harita oluştur
+        var map = L.map('map').setView([39.0, 35.0], 6); // Türkiye merkezi
+
+        // OpenStreetMap tile ekle
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Ofis konumları - Araç ekleme formundaki TÜM alış noktaları (39 konum)
+        var offices = [
+            // İstanbul (5)
+            { name: 'İstanbul Havalimanı', lat: 41.2619, lng: 28.7419, phone: '+90 212 555 01 01' },
+            { name: 'İstanbul Sabiha Gökçen Havalimanı', lat: 40.8986, lng: 29.3092, phone: '+90 216 555 01 02' },
+            { name: 'İstanbul Ataşehir Watergarden AVM', lat: 40.9871, lng: 29.1264, phone: '+90 216 555 01 03' },
+            { name: 'İstanbul Maltepe Park AVM', lat: 40.9337, lng: 29.1435, phone: '+90 216 555 01 04' },
+            { name: 'İstanbul Kadıköy', lat: 40.9833, lng: 29.0333, phone: '+90 216 555 01 05' },
+
+            // Ankara (4)
+            { name: 'Ankara Esenboğa Havalimanı', lat: 40.1281, lng: 32.9951, phone: '+90 312 555 02 01' },
+            { name: 'Ankara YHT Gar', lat: 39.9334, lng: 32.8597, phone: '+90 312 555 02 02' },
+            { name: 'Ankara Atlantis AVM', lat: 39.9042, lng: 32.8289, phone: '+90 312 555 02 03' },
+            { name: 'Ankara Kızılay', lat: 39.9199, lng: 32.8543, phone: '+90 312 555 02 04' },
+
+            // İzmir (3)
+            { name: 'İzmir Adnan Menderes Havalimanı', lat: 38.2924, lng: 27.1569, phone: '+90 232 555 03 01' },
+            { name: 'İzmir Mavibahçe AVM', lat: 38.4189, lng: 27.1287, phone: '+90 232 555 03 02' },
+            { name: 'İzmir Otogar', lat: 38.4039, lng: 27.1349, phone: '+90 232 555 03 03' },
+
+            // Adana (3)
+            { name: 'Adana Şakirpaşa Havalimanı', lat: 36.9822, lng: 35.2804, phone: '+90 322 555 06 01' },
+            { name: 'Adana Optimum AVM', lat: 37.0000, lng: 35.3213, phone: '+90 322 555 06 02' },
+            { name: 'Adana Otogar', lat: 36.9914, lng: 35.3251, phone: '+90 322 555 06 03' },
+
+            // Antalya (3)
+            { name: 'Antalya Havalimanı', lat: 36.8987, lng: 30.8005, phone: '+90 242 555 04 01' },
+            { name: 'Antalya Terra City AVM', lat: 36.8850, lng: 30.7069, phone: '+90 242 555 04 02' },
+            { name: 'Antalya Otogar', lat: 36.8992, lng: 30.6954, phone: '+90 242 555 04 03' },
+
+            // Bursa (1)
+            { name: 'Bursa Yenişehir Havalimanı', lat: 40.2331, lng: 29.5625, phone: '+90 224 555 05 01' },
+
+            // Adıyaman (2)
+            { name: 'Adıyaman Havalimanı', lat: 37.7314, lng: 38.4689, phone: '+90 416 555 07 01' },
+            { name: 'Adıyaman Merkez', lat: 37.7648, lng: 38.2763, phone: '+90 416 555 07 02' },
+
+            // Afyonkarahisar (2)
+            { name: 'Afyonkarahisar Zafer Havalimanı', lat: 38.7269, lng: 30.5833, phone: '+90 272 555 08 01' },
+            { name: 'Afyonkarahisar Otogar', lat: 38.7574, lng: 30.5387, phone: '+90 272 555 08 02' },
+
+            // Ağrı (2)
+            { name: 'Ağrı Havalimanı', lat: 39.6545, lng: 43.0260, phone: '+90 472 555 09 01' },
+            { name: 'Ağrı Merkez', lat: 39.7191, lng: 43.0503, phone: '+90 472 555 09 02' },
+
+            // Aksaray (1)
+            { name: 'Aksaray Otogar', lat: 38.3687, lng: 34.0370, phone: '+90 382 555 10 01' },
+
+            // Amasya (2)
+            { name: 'Amasya Merzifon Havalimanı', lat: 40.8294, lng: 35.5219, phone: '+90 358 555 11 01' },
+            { name: 'Amasya Merkez', lat: 40.6499, lng: 35.8353, phone: '+90 358 555 11 02' },
+
+            // Ardahan (1)
+            { name: 'Ardahan Merkez', lat: 41.1105, lng: 42.7022, phone: '+90 478 555 12 01' },
+
+            // Artvin (1)
+            { name: 'Artvin Merkez', lat: 41.1828, lng: 41.8183, phone: '+90 466 555 13 01' },
+
+            // Aydın (2)
+            { name: 'Aydın Çıldır Havalimanı', lat: 37.8560, lng: 27.8416, phone: '+90 256 555 14 01' },
+            { name: 'Aydın Otogar', lat: 37.8444, lng: 27.8458, phone: '+90 256 555 14 02' },
+
+            // Balıkesir (2)
+            { name: 'Balıkesir Koca Seyit Havalimanı', lat: 39.6191, lng: 27.0138, phone: '+90 266 555 15 01' },
+            { name: 'Balıkesir Otogar', lat: 39.6484, lng: 27.8826, phone: '+90 266 555 15 02' },
+
+            // Bartın (1)
+            { name: 'Bartın Merkez', lat: 41.6344, lng: 32.3375, phone: '+90 378 555 16 01' },
+
+            // Batman (2)
+            { name: 'Batman Havalimanı', lat: 37.9290, lng: 41.1166, phone: '+90 488 555 17 01' },
+            { name: 'Batman Park AVM', lat: 37.8812, lng: 41.1350, phone: '+90 488 555 17 02' },
+
+            // Bayburt (1)
+            { name: 'Bayburt Merkez', lat: 40.2552, lng: 40.2249, phone: '+90 458 555 18 01' },
+
+            // Bilecik (1)
+            { name: 'Bilecik Otogar', lat: 40.1500, lng: 29.9833, phone: '+90 228 555 19 01' },
+
+            // Bingöl (2)
+            { name: 'Bingöl Havalimanı', lat: 38.8592, lng: 40.5960, phone: '+90 426 555 20 01' },
+            { name: 'Bingöl Merkez', lat: 38.8854, lng: 40.4983, phone: '+90 426 555 20 02' }
+        ];
+
+        // Marker'ları sakla (filtreleme için)
+        var allMarkers = [];
+
+        // Marker'ları ekle
+        offices.forEach(function (office) {
+            var marker = L.marker([office.lat, office.lng]).addTo(map);
+            marker.bindPopup(`
+                <b>${office.name}</b><br>
+                ${office.phone}<br>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=${office.lat},${office.lng}" 
+                   target="_blank" class="btn btn-sm btn-success mt-2">Yol Tarifi</a>
+            `);
+
+            // Marker'a şehir bilgisi ekle (name'den ilk kelime)
+            marker.cityName = office.name.split(' ')[0];
+            allMarkers.push(marker);
+        });
+
+        // İl filtreleme
+        document.getElementById('cityFilter').addEventListener('change', function () {
+            var selectedCity = this.value;
+            var visibleCount = 0;
+            var cityBounds = [];
+
+            allMarkers.forEach(function (marker) {
+                if (selectedCity === '' || marker.cityName === selectedCity) {
+                    marker.addTo(map);
+                    cityBounds.push(marker.getLatLng());
+                    visibleCount++;
+                } else {
+                    map.removeLayer(marker);
+                }
+            });
+
+            // Şube sayısını güncelle
+            document.getElementById('officeCount').textContent = visibleCount;
+
+            // Haritayı filtrelenmiş marker'lara zoom yap
+            if (cityBounds.length > 0) {
+                if (cityBounds.length === 1) {
+                    map.setView(cityBounds[0], 12); // Tek marker varsa zoom 12
+                } else {
+                    map.fitBounds(L.latLngBounds(cityBounds)); // Çoklu marker'lar için otomatik zoom
+                }
+            } else {
+                map.setView([39.0, 35.0], 6); // Türkiye merkezi
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

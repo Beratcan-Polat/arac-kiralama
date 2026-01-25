@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Admin Paneli</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="d-flex">
+
+        <div class="sidebar p-3 d-flex flex-column" style="width: 280px;">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <i class="fa-solid fa-road fa-2x me-2 text-primary"></i>
+                <span class="fs-4 fw-bold">RotaCar</span>
+                <span class="badge bg-primary ms-2" style="font-size: 0.6em;">Admin</span>
+            </a>
+            <hr>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="/admin/panel" class="nav-link active" aria-current="page">
+                        <i class="fa-solid fa-gauge me-2"></i> Genel Bakış
+                    </a>
+                </li>
+                <li>
+                    <a href="/arac-ekle" class="nav-link text-white">
+                        <i class="fa-solid fa-car me-2"></i> Araç Ekle
+                    </a>
+                </li>
+                <li>
+                    <a href="/araclar" class="nav-link text-white">
+                        <i class="fa-solid fa-list me-2"></i> Araç Listesi
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/kullanicilar" class="nav-link text-white">
+                        <i class="fa-solid fa-users me-2"></i> Kullanıcılar
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/ciro-raporu" class="nav-link text-white">
+                        <i class="fa-solid fa-chart-line me-2"></i> Ciro
+                    </a>
+                </li>
+                <li>
+                    <a href="/admin/fiyat-politikalari" class="nav-link text-white">
+                        <i class="fa-solid fa-tags me-2"></i> Fiyat Politikaları
+                    </a>
+                </li>
+            </ul>
+            <hr>
+            <div class="dropdown">
+                <a href="/cikis"
+                    class="d-flex align-items-center text-white text-decoration-none p-2 bg-danger rounded justify-content-center">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i> <strong>Çıkış Yap</strong>
+                </a>
+            </div>
+        </div>
+
+        <div class="container-fluid p-4 bg-light">
+            <h2 class="mb-4">Hoşgeldiniz, Yönetici 👋</h2>
+
+            <div th:if="${mesaj}" class="alert alert-success alert-dismissible fade show">
+                <i class="fa-solid fa-circle-check me-2"></i> <span th:text="${mesaj}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1">Toplam Araç</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${toplamArac}">12</h2>
+                                </div>
+                                <i class="fa-solid fa-car fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1">Aktif Kiralama</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${aktifKiralama}">5</h2>
+                                </div>
+                                <i class="fa-solid fa-calendar-check fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-uppercase mb-1">Bakım Bekleyen</h6>
+                                    <h2 class="mb-0 fw-bold" th:text="${bakimSayisi}">2</h2>
+                                </div>
+                                <i class="fa-solid fa-wrench fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <a href="/admin/ciro-raporu" class="text-decoration-none">
+                        <div class="card bg-info text-white h-100" style="cursor: pointer;">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-uppercase mb-1">Toplam Gelir</h6>
+                                        <h2 class="mb-0 fw-bold"
+                                            th:text="${'₺ ' + #numbers.formatDecimal(toplamGelir, 1, 'DEFAULT', 0, 'DEFAULT')}">
+                                            ₺ 45K</h2>
+                                    </div>
+                                    <i class="fa-solid fa-turkish-lira-sign fa-2x opacity-50"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ONAY BEKLEYEN ARAÇLAR (Varsa Göster) -->
+            <div th:if="${!onayBekleyenAraclar.empty}" class="card mb-4 border-warning">
+                <div class="card-header bg-warning text-dark fw-bold">
+                    <i class="fa-solid fa-hourglass-half me-2"></i> Onay Bekleyen Yeni Araçlar
+                </div>
+                <!-- ... (Mevcut kod aynı) ... -->
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <!-- ... -->
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Marka / Model</th>
+                                    <th>Yıl</th>
+                                    <th>Sınıf</th>
+                                    <th>Fiyat</th>
+                                    <th>Resim</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="arac : ${onayBekleyenAraclar}">
+                                    <td>
+                                        <span class="fw-bold" th:text="${arac.marka}">Marka</span>
+                                        <span th:text="${arac.model}">Model</span>
+                                    </td>
+                                    <td th:text="${arac.minYas}">2023</td>
+                                    <td><span class="badge bg-secondary" th:text="${arac.aracSinifi}">EKONOMI</span>
+                                    </td>
+                                    <td class="fw-bold text-success" th:text="${arac.gunlukFiyat} + ' ₺'">0 ₺</td>
+                                    <td>
+                                        <a th:href="${arac.resimUrl}" target="_blank"
+                                            class="btn btn-sm btn-light border"><i class="fa-regular fa-image"></i>
+                                            Gör</a>
+                                    </td>
+                                    <td class="text-end">
+                                        <a th:href="@{/admin/arac-onayla/{id}(id=${arac.id})}"
+                                            class="btn btn-success btn-sm fw-bold me-1">
+                                            <i class="fa-solid fa-check me-1"></i> ONAYLA
+                                        </a>
+                                        <a th:href="@{/admin/arac-reddet/{id}(id=${arac.id})}"
+                                            onclick="return confirm('Bu aracı reddedip silmek istediğinize emin misiniz?')"
+                                            class="btn btn-outline-danger btn-sm fw-bold">
+                                            <i class="fa-solid fa-trash me-1"></i> SİL
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAKIMDAKI ARAÇLAR (Varsa Göster) -->
+            <div th:if="${!bakimdakiAraclar.empty}" class="card mb-4 border-danger">
+                <div class="card-header bg-danger text-white fw-bold">
+                    <i class="fa-solid fa-wrench me-2"></i> Bakım/Hasar Gören Araçlar
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Araç</th>
+                                    <th>Plaka</th>
+                                    <th>Açıklama</th>
+                                    <th>Başlangıç</th>
+                                    <th class="text-end">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="bakim : ${bakimdakiAraclar}">
+                                    <td th:text="${bakim.arac.marka + ' ' + bakim.arac.model}">Marka Model</td>
+                                    <td th:text="${bakim.arac.plaka}">34ABC12</td>
+                                    <td class="text-danger small" th:text="${bakim.aciklama}">Çizik var</td>
+                                    <td th:text="${bakim.baslangicTarihi}">2023-01-01</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal"
+                                            th:data-bs-target="'#tamirModal' + ${bakim.id}">
+                                            <i class="fa-solid fa-check-double"></i> Tamamla
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Sol Kolon: İşlemler -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white fw-bold py-3">
+                            <i class="fa-solid fa-bolt text-warning me-2"></i> Hızlı İşlemler
+                        </div>
+                        <div class="card-body">
+                            <!-- Duyuru Ekleme Formu -->
+                            <h6 class="fw-bold mb-3">Duyuru Yayınla</h6>
+                            <form action="/admin/duyuru-ekle" method="post" class="mb-4 text-bg-light p-3 rounded">
+                                <div class="mb-3">
+                                    <input type="text" class="form-control form-control-sm" id="baslik" name="baslik"
+                                        required placeholder="Başlık Giriniz...">
+                                </div>
+                                <div class="mb-3">
+                                    <textarea class="form-control form-control-sm" id="icerik" name="icerik" rows="2"
+                                        required placeholder="İçerik..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-success w-100"><i
+                                        class="fa-solid fa-paper-plane"></i> Yayınla</button>
+                            </form>
+
+                            <hr>
+
+                            <a href="/arac-ekle" class="btn btn-primary w-100 py-2"><i class="fa-solid fa-plus"></i>
+                                Yeni Araç Tanımla</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağ Kolon: Aktif Duyurular -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-white fw-bold py-3">
+                            <i class="fa-solid fa-bullhorn text-info me-2"></i> Yayındaki Duyurular
+                        </div>
+                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                            <div th:if="${duyuruListesi.empty}" class="text-center text-muted py-5">
+                                <i class="fa-regular fa-folder-open fa-2x mb-2"></i><br>
+                                <small>Henüz duyuru yayınlamadınız.</small>
+                            </div>
+
+                            <div th:each="duyuru : ${duyuruListesi}"
+                                class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="fw-bold text-dark" th:text="${duyuru.baslik}">Başlık</span>
+                                        <span class="badge bg-light text-secondary border" style="font-size: 0.6em;"
+                                            th:text="${#temporals.format(duyuru.tarih, 'dd.MM HH:mm')}">Tarih</span>
+                                    </div>
+                                    <p class="small text-secondary mb-0" th:text="${duyuru.icerik}">İçerik...</p>
+                                </div>
+                                <a th:href="@{/admin/duyuru-sil/{id}(id=${duyuru.id})}"
+                                    onclick="return confirm('Bu duyuruyu silmek istediğinize emin misiniz?')"
+                                    class="btn btn-outline-danger btn-sm ms-2" title="Sil">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+
+    <!-- Modals (Loop Outside Logic) -->
+    <th:block th:each="bakim : ${bakimdakiAraclar}">
+        <div class="modal fade text-start" th:id="'tamirModal' + ${bakim.id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form action="/admin/bakim-tamamla" method="post">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Bakım Tamamlama</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="bakimId" th:value="${bakim.id}">
+                            <div class="mb-3">
+                                <label class="form-label">Servis/Tamir Masrafı (TL)</label>
+                                <input type="number" class="form-control" name="masraf" required placeholder="0.00">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                            <button type="submit" class="btn btn-success">Kaydet ve Aracı Aç</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

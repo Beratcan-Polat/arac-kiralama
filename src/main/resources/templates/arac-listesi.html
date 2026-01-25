@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <title>Araç Listesi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm"
+        style="background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="#">
+                <i class="fa-solid fa-road me-2 text-info"></i>RotaCar
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link active" href="/admin/panel"><i class="fa-solid fa-gauge me-1"></i> Admin
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('PERSONEL')">
+                        <a class="nav-link active" href="/personel/panel"><i class="fa-solid fa-gauge me-1"></i>
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/arac-ekle"><i class="fa-solid fa-plus me-1"></i> Araç Ekle</a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link active" href="/araclar"><i class="fa-solid fa-list me-1"></i> Araçlar</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/kiralamalarim"><i class="fa-solid fa-clock-rotate-left me-1"></i>
+                            Kiralamalarım</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/ofisler"><i class="fa-solid fa-building me-1"></i> Ofislerimiz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/ai-asistan">
+                            <i class="fa-solid fa-robot"></i> AI Asistan
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a href="/cikis" class="btn btn-light btn-sm text-primary fw-bold">Çıkış Yap</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+
+        <div th:if="${param.basarili}" class="alert alert-success alert-dismissible fade show">
+            <i class="fa-solid fa-circle-check me-2"></i> İşlem başarıyla tamamlandı!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${param.silindi}" class="alert alert-danger alert-dismissible fade show">
+            <i class="fa-solid fa-trash me-2"></i> Araç başarıyla silindi!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div th:if="${hata}" class="alert alert-warning alert-dismissible fade show">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> <span th:text="${hata}">Hata</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+
+            <div th:if="${uyariId}" class="mt-2">
+                <a th:href="@{/arac-sil/{id}(id=${uyariId}, zorla=true)}" class="btn btn-sm btn-danger fw-bold">
+                    Evet, Rezervasyonları İptal Et ve Sil
+                </a>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="fw-bold text-secondary">Araç Kiralama</h2>
+            <div sec:authorize="hasAnyRole('ADMIN', 'PERSONEL')">
+                <a href="/araclar?tumunuGoster=true" class="btn btn-outline-primary me-2">
+                    <i class="fa-solid fa-list"></i> Tümünü Listele
+                </a>
+                <a href="/arac-ekle" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Yeni Araç Ekle
+                </a>
+            </div>
+        </div>
+
+        <!-- Alış Noktası ve Tarih Seçimi (Sadece müşteriler için) -->
+        <div sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')" class="card shadow-lg mb-4 border-0">
+            <div class="card-body bg-gradient p-4"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <form action="/araclar" method="get">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-white">
+                                <i class="fa-solid fa-location-dot me-2"></i>Alış Noktası Seç
+                            </label>
+                            <select name="alisNoktasi" class="form-select form-select-lg" required
+                                th:value="${secilenAlisNoktasi}">
+                                <option value="">-- Alış Noktası Seçin --</option>
+
+                                <optgroup label="İstanbul">
+                                    <option value="İstanbul Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'İstanbul Havalimanı'}">İstanbul Havalimanı
+                                    </option>
+                                    <option value="İstanbul Sabiha Gökçen Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'İstanbul Sabiha Gökçen Havalimanı'}">
+                                        İstanbul Sabiha Gökçen Havalimanı</option>
+                                    <option value="İstanbul Ataşehir Watergarden AVM"
+                                        th:selected="${secilenAlisNoktasi == 'İstanbul Ataşehir Watergarden AVM'}">
+                                        İstanbul Ataşehir Watergarden AVM</option>
+                                    <option value="İstanbul Maltepe Park AVM"
+                                        th:selected="${secilenAlisNoktasi == 'İstanbul Maltepe Park AVM'}">İstanbul
+                                        Maltepe Park AVM</option>
+                                    <option value="İstanbul Kadıköy"
+                                        th:selected="${secilenAlisNoktasi == 'İstanbul Kadıköy'}">İstanbul Kadıköy
+                                    </option>
+                                </optgroup>
+
+                                <optgroup label="Ankara">
+                                    <option value="Ankara Esenboğa Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Ankara Esenboğa Havalimanı'}">Ankara
+                                        Esenboğa Havalimanı</option>
+                                    <option value="Ankara YHT Gar"
+                                        th:selected="${secilenAlisNoktasi == 'Ankara YHT Gar'}">Ankara YHT Gar</option>
+                                    <option value="Ankara Atlantis AVM"
+                                        th:selected="${secilenAlisNoktasi == 'Ankara Atlantis AVM'}">Ankara Atlantis AVM
+                                    </option>
+                                    <option value="Ankara Kızılay"
+                                        th:selected="${secilenAlisNoktasi == 'Ankara Kızılay'}">Ankara Kızılay</option>
+                                </optgroup>
+
+                                <optgroup label="İzmir">
+                                    <option value="İzmir Adnan Menderes Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'İzmir Adnan Menderes Havalimanı'}">İzmir
+                                        Adnan Menderes Havalimanı</option>
+                                    <option value="İzmir Mavibahçe AVM"
+                                        th:selected="${secilenAlisNoktasi == 'İzmir Mavibahçe AVM'}">İzmir Mavibahçe AVM
+                                    </option>
+                                    <option value="İzmir Otogar" th:selected="${secilenAlisNoktasi == 'İz mir Otogar'}">
+                                        İzmir Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Adana">
+                                    <option value="Adana Şakirpaşa Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Ad ana Şakirpaşa Havalimanı'}">Adana
+                                        Şakirpaşa Havalimanı</option>
+                                    <option value="Adana Optimum AVM"
+                                        th:selected="${secilenAlisNoktasi == 'Adana Optimum AVM'}">Adana Optimum AVM
+                                    </option>
+                                    <option value="Adana Otogar" th:selected="${secilenAlisNoktasi == 'Adana Otogar'}">
+                                        Adana Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Adıyaman">
+                                    <option value="Adıyaman Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Adıyaman Havalimanı'}">Adıyaman Havalimanı
+                                    </option>
+                                    <option value="Adıyaman Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Adıyaman Merkez'}">Adıyaman Merkez
+                                    </option>
+                                </optgroup>
+
+                                <optgroup label="Afyonkarahisar">
+                                    <option value="Afyonkarahisar Zafer Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Afyonkarahisar Zafer Havalimanı'}">
+                                        Afyonkarahisar Zafer Havalimanı</option>
+                                    <option value="Afyonkarahisar Otogar"
+                                        th:selected="${secilenAlisNoktasi == 'Afyonkarahisar Otogar'}">Afyonkarahisar
+                                        Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Ağrı">
+                                    <option value="Ağrı Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Ağrı Havalimanı'}">Ağrı Havalimanı
+                                    </option>
+                                    <option value="Ağrı Merkez" th:selected="${secilenAlisNoktasi == 'Ağrı Merkez'}">
+                                        Ağrı Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Aksaray">
+                                    <option value="Aksaray Otogar"
+                                        th:selected="${secilenAlisNoktasi == 'Aksaray Otogar'}">Aksaray Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Amasya">
+                                    <option value="Amasya Merzifon Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Amasya Merzifon Havalimanı'}">Amasya
+                                        Merzifon Havalimanı</option>
+                                    <option value="Amasya Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Amasya Merkez'}">Amasya Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Antalya">
+                                    <option value="Antalya Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Antalya Havalimanı'}">Antalya Havalimanı
+                                    </option>
+                                    <option value="Antalya Terra City AVM"
+                                        th:selected="${secilenAlisNoktasi == 'Antalya Terra City AVM'}">Antalya Terra
+                                        City AVM</option>
+                                    <option value="Antalya Otogar"
+                                        th:selected="${secilenAlisNoktasi == 'Antalya Otogar'}">Antalya Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Ardahan">
+                                    <option value="Ardahan Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Ardahan Merkez'}">Ardahan Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Artvin">
+                                    <option value="Artvin Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Artvin Merkez'}">Artvin Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Aydın">
+                                    <option value="Aydın Çıldır Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Aydın Çıldır Havalimanı'}">Aydın Çıldır
+                                        Havalimanı</option>
+                                    <option value="Aydın Otogar" th:selected="${secilenAlisNoktasi == 'Aydın Otogar'}">
+                                        Aydın Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Balıkesir">
+                                    <option value="Balıkesir Koca Seyit Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Balıkesir Koca Seyit Havalimanı'}">
+                                        Balıkesir Koca Seyit Havalimanı</option>
+                                    <option value="Balıkesir Otogar"
+                                        th:selected="${secilenAlisNoktasi == 'Balıkesir Otogar'}">Balıkesir Otogar
+                                    </option>
+                                </optgroup>
+
+                                <optgroup label="Bartın">
+                                    <option value="Bartın Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Bartın Merkez'}">Bartın Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Batman">
+                                    <option value="Batman Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Batman Havalimanı'}">Batman Havalimanı
+                                    </option>
+                                    <option value="Batman Park AVM"
+                                        th:selected="${secilenAlisNoktasi == 'Batman Park AVM'}">Batman Park AVM
+                                    </option>
+                                </optgroup>
+
+                                <optgroup label="Bayburt">
+                                    <option value="Bayburt Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Bayburt Merkez'}">Bayburt Merkez</option>
+                                </optgroup>
+
+                                <optgroup label="Bilecik">
+                                    <option value="Bilecik Otogar"
+                                        th:selected="${secilenAlisNoktasi == 'Bilecik Otogar'}">Bilecik Otogar</option>
+                                </optgroup>
+
+                                <optgroup label="Bingöl">
+                                    <option value="Bingöl Havalimanı"
+                                        th:selected="${secilenAlisNoktasi == 'Bingöl Havalimanı'}">Bingöl Havalimanı
+                                    </option>
+                                    <option value="Bingöl Merkez"
+                                        th:selected="${secilenAlisNoktasi == 'Bingöl Merkez'}">Bingöl Merkez</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-white">
+                                <i class="fa-solid fa-calendar-days me-2"></i>Alış Tarihi & Saati
+                            </label>
+                            <div class="input-group">
+                                <input type="date" name="alisTarihi" class="form-control form-control-lg"
+                                    th:value="${secilenAlisTarihi}" required>
+                                <input type="time" name="alisSaati" class="form-control form-control-lg"
+                                    th:value="${secilenAlisSaati != null ? secilenAlisSaati : '10:00'}" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold text-white">
+                                <i class="fa-solid fa-calendar-days me-2"></i>İade Tarihi & Saati
+                            </label>
+                            <div class="input-group">
+                                <input type="date" name="iadeTarihi" class="form-control form-control-lg"
+                                    th:value="${secilenIadeTarihi}" required>
+                                <input type="time" name="iadeSaati" class="form-control form-control-lg"
+                                    th:value="${secilenIadeSaati != null ? secilenIadeSaati : '10:00'}" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold px-5 py-3 shadow-lg">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i> Araçları Keşfet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filtre ve Sıralama (Sadece arama yapıldıysa görünür) -->
+        <div sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')" class="card shadow-sm mb-4" th:if="${aramaYapildi}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-car me-2"></i>Segment</label>
+                        <select id="filterSegment" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="Ekonomi">Ekonomi</option>
+                            <option value="Konfor">Konfor</option>
+                            <option value="Lüks">Lüks</option>
+                            <option value="Prestij">Prestij</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-shapes me-2"></i>Kasa Tipi</label>
+                        <select id="filterKasa" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="Sedan">Sedan</option>
+                            <option value="Hatchback">Hatchback</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Crossover">Crossover</option>
+                            <option value="MPV">MPV</option>
+                            <option value="Cabrio">Cabrio</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-gears me-2"></i>Vites</label>
+                        <select id="filterVites" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="Manuel">Manuel</option>
+                            <option value="Otomatik">Otomatik</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-gas-pump me-2"></i>Yakıt</label>
+                        <select id="filterYakit" class="form-select">
+                            <option value="">Tümü</option>
+                            <option value="Benzin">Benzin</option>
+                            <option value="Dizel">Dizel</option>
+                            <option value="Hibrit">Hibrit</option>
+                            <option value="Elektrik">Elektrik</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold"><i class="fa-solid fa-sort me-2"></i>Sırala</label>
+                        <select id="sortBy" class="form-select">
+                            <option value="">Önerilen</option>
+                            <option value="price-asc">Artan Fiyata Göre</option>
+                            <option value="price-desc">Azalan Fiyata Göre</option>
+
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arama Yapılmadıysa Gösterilecek Karşılama Ekranı -->
+        <div th:if="${!aramaYapildi}" class="text-center mt-5 mb-5 p-5 bg-light rounded shadow-sm opacity-75">
+            <div class="mb-3">
+                <i class="fa-solid fa-magnifying-glass-location fa-4x text-primary animate-bounce"></i>
+            </div>
+            <h3 class="fw-bold text-secondary">Yolculuğunuz Burada Başlıyor!</h3>
+            <p class="lead text-muted">Müsait araçları görüntülemek için lütfen yukarıdan <strong>Alış Noktası</strong>
+                ve <strong>Tarih</strong> seçimi yapınız.</p>
+        </div>
+
+        <div class="row" id="vehicleContainer" th:if="${aramaYapildi}">
+            <div class="col-md-6 col-lg-4 mb-4 vehicle-card" th:each="arac : ${aracListesi}"
+                th:attr="data-segment=${arac.aracSinifi}, data-kasa=${arac.kasaTipi}, data-vites=${arac.vitesTipi}, data-yakit=${arac.yakitTipi}, data-fiyat=${arac.gunlukFiyat}">
+                <div class="card h-100 shadow-sm border-0">
+
+                    <div class="card-img-wrapper position-relative" th:id="'wrapper-' + ${arac.id}">
+                        <img th:src="${arac.resimUrl != null && !arac.resimUrl.isEmpty() ? arac.resimUrl : '/images/default-car.jpg'}"
+                            class="card-img-top" alt="Arac Resmi">
+
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-warning text-dark me-1" th:text="${arac.aracSinifi}">Lüks</span>
+                            <span class="badge bg-secondary" th:text="${arac.kasaTipi}">Sedan</span>
+                        </div>
+
+                        <div class="card-details-overlay text-center px-4">
+                            <h6 class="fw-bold text-primary mb-3 border-bottom pb-2 w-100">Kiralama Koşulları</h6>
+                            <div class="row w-100 text-start small">
+                                <div class="col-6 mb-2 border-end">
+                                    <div class="text-muted" style="font-size: 0.75rem;">Min. Sürücü Yaşı</div>
+                                    <div class="fw-bold text-dark"><i class="fa-solid fa-user-check me-1"></i><span
+                                            th:text="${arac.minYas}">21</span></div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <div class="text-muted" style="font-size: 0.75rem;">Min. Genç Yaş</div>
+                                    <div class="fw-bold text-dark"><span th:text="${arac.minGencYas}">19</span></div>
+                                </div>
+                                <div class="col-6 mb-2 border-end">
+                                    <div class="text-muted" style="font-size: 0.75rem;">Min. Ehliyet Yılı</div>
+                                    <div class="fw-bold text-dark"><i class="fa-solid fa-id-card me-1"></i><span
+                                            th:text="${arac.minEhliyetYili}">2</span> Yıl</div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <div class="text-muted" style="font-size: 0.75rem;">Min. Genç Ehliyet</div>
+                                    <div class="fw-bold text-dark"><span th:text="${arac.minGencEhliyetYili}">1</span>
+                                        Yıl</div>
+                                </div>
+                                <div class="col-12 mt-2 pt-2 border-top">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">Günlük Limit:</span>
+                                        <span class="fw-bold text-danger"><span
+                                                th:text="${arac.gunlukKmLimiti}">400</span> KM</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="text-muted">Teminat Tutarı:</span>
+                                        <span class="fw-bold text-success"><span
+                                                th:text="${arac.teminatTutari}">2000</span> TL</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold mb-2" th:text="${arac.marka + ' ' + arac.model}">Marka</h5>
+
+                        <div class="d-flex mb-3">
+                            <span class="badge bg-light text-dark border me-2">
+                                <i class="fa-solid fa-gas-pump me-1 text-secondary"></i> <span
+                                    th:text="${arac.yakitTipi}"></span>
+                            </span>
+                            <span class="badge bg-light text-dark border">
+                                <i class="fa-solid fa-gears me-1 text-secondary"></i> <span
+                                    th:text="${arac.vitesTipi}"></span>
+                            </span>
+                            <!-- DURUM BADGE - Müşteri görmesin -->
+                            <span sec:authorize="hasAnyRole('ADMIN', 'PERSONEL')"
+                                class="badge bg-info text-dark border ms-auto" th:text="${arac.durum}">MUSAIT</span>
+                        </div>
+
+                        <div class="text-end mb-3">
+                            <span class="fs-4 fw-bold text-primary" th:text="${arac.gunlukFiyat}">0</span>
+                            <small class="text-muted fw-bold">₺ / Gün</small>
+                        </div>
+
+                        <div class="mt-auto d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary fw-bold"
+                                th:onclick="'toggleDetay(' + ${arac.id} + ', this)'">
+                                <i class="fa-solid fa-circle-info me-2"></i> <span>Koşulları Gör</span>
+                            </button>
+
+                            <div class="mt-2">
+                                <a th:href="@{/kiralama-yap/__${arac.id}__(alisTarihi=${secilenAlisTarihi}, iadeTarihi=${secilenIadeTarihi}, alisSaati=${secilenAlisSaati}, iadeSaati=${secilenIadeSaati})}"
+                                    class="btn btn-success fw-bold w-100 shadow-sm py-2">
+                                    <i class="fa-solid fa-check-circle me-2"></i>Hemen Kirala
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${aramaYapildi and aracListesi.empty}" class="text-center py-5">
+            <i class="fa-solid fa-car fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">Şu an müsait araç bulunmuyor.</h4>
+        </div>
+    </div>
+
+    <script>
+        function toggleDetay(aracId, btnElement) {
+            var wrapper = document.getElementById('wrapper-' + aracId);
+            wrapper.classList.toggle('show-details');
+            var spanText = btnElement.querySelector('span');
+            var icon = btnElement.querySelector('i');
+            if (wrapper.classList.contains('show-details')) {
+                spanText.textContent = "Aracı Gör";
+                icon.classList.remove('fa-circle-info');
+                icon.classList.add('fa-image');
+                btnElement.classList.replace('btn-outline-primary', 'btn-outline-dark');
+            } else {
+                spanText.textContent = "Koşulları Gör";
+                icon.classList.remove('fa-image');
+                icon.classList.add('fa-circle-info');
+                btnElement.classList.replace('btn-outline-dark', 'btn-outline-primary');
+            }
+        }
+
+        function silmeIslemi(id) {
+            var sebep = prompt("Araç silinme/arşivlenme sebebi nedir? (Boş bırakabilirsiniz)");
+            if (sebep !== null) {
+                window.location.href = "/arac-sil/" + id + "?silinmeSebebi=" + encodeURIComponent(sebep);
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Filtreleme ve Sıralama
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterSegment = document.getElementById('filterSegment');
+            const filterKasa = document.getElementById('filterKasa');
+            const filterVites = document.getElementById('filterVites');
+            const filterYakit = document.getElementById('filterYakit');
+            const sortBy = document.getElementById('sortBy');
+            const vehicleContainer = document.getElementById('vehicleContainer');
+
+            if (!vehicleContainer) return; // Araç yoksa çık
+
+            // Tüm araç kartlarını al
+            let allVehicles = Array.from(vehicleContainer.children);
+
+            function applyFiltersAndSort() {
+                const segmentVal = filterSegment?.value || '';
+                const kasaVal = filterKasa?.value || '';
+                const vitesVal = filterVites?.value || '';
+                const yakitVal = filterYakit?.value || '';
+                const sortVal = sortBy?.value || '';
+
+                // Filtrele
+                let filtered = allVehicles.filter(vehicle => {
+                    const segment = vehicle.getAttribute('data-segment') || '';
+                    const kasa = vehicle.getAttribute('data-kasa') || '';
+                    const vites = vehicle.getAttribute('data-vites') || '';
+                    const yakit = vehicle.getAttribute('data-yakit') || '';
+
+                    // Segment kontrolü
+                    if (segmentVal && segment !== segmentVal) {
+                        return false;
+                    }
+
+                    // Kasa tipi kontrolü
+                    if (kasaVal && kasa !== kasaVal) {
+                        return false;
+                    }
+
+                    // Vites kontrolü
+                    if (vitesVal && vites !== vitesVal) {
+                        return false;
+                    }
+
+                    // Yakıt kontrolü
+                    if (yakitVal && yakit !== yakitVal) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                // Sırala
+                if (sortVal) {
+                    filtered.sort((a, b) => {
+                        if (sortVal === 'price-asc' || sortVal === 'price-desc') {
+                            // Fiyatı data attribute'tan al
+                            const priceA = parseInt(a.getAttribute('data-fiyat') || '0');
+                            const priceB = parseInt(b.getAttribute('data-fiyat') || '0');
+                            return sortVal === 'price-asc' ? priceA - priceB : priceB - priceA;
+
+                        }
+                        return 0;
+                    });
+                }
+
+                // Listeyi güncelle
+                vehicleContainer.innerHTML = '';
+                filtered.forEach(vehicle => vehicleContainer.appendChild(vehicle));
+
+                // Araç bulunamadı mesajı
+                if (filtered.length === 0) {
+                    vehicleContainer.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="fa-solid fa-car-side fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">Seçilen Filtrelere Uygun Araç Bulunamadı</h4>
+                            <p class="text-muted">Filtreleri değiştirerek tekrar deneyin.</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // Event listener'lar
+            filterSegment?.addEventListener('change', applyFiltersAndSort);
+            filterKasa?.addEventListener('change', applyFiltersAndSort);
+            filterVites?.addEventListener('change', applyFiltersAndSort);
+            filterYakit?.addEventListener('change', applyFiltersAndSort);
+            sortBy?.addEventListener('change', applyFiltersAndSort);
+        });
+
+
+
+        function kiralamayaGit(aracId, alisTarihi, iadeTarihi, alisSaati, iadeSaati) {
+            // Eğer 'null' geldiyse boş string yap
+            if (alisTarihi === 'null' || !alisTarihi) alisTarihi = "";
+            if (iadeTarihi === 'null' || !iadeTarihi) iadeTarihi = "";
+            if (alisSaati === 'null' || !alisSaati) alisSaati = "10:00";
+            if (iadeSaati === 'null' || !iadeSaati) iadeSaati = "10:00";
+
+            // URL oluştur ve git
+            let url = '/kiralama-yap/' + aracId;
+            if (alisTarihi && iadeTarihi) {
+                url += '?alisTarihi=' + alisTarihi + '&iadeTarihi=' + iadeTarihi + '&alisSaati=' + alisSaati + '&iadeSaati=' + iadeSaati;
+            }
+
+            window.location.href = url;
+        }
+    </script>
+</body>
+
+</html>

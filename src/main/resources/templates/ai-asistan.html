@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Asistan - Araç Kiralama</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .ai-message {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, .1);
+            border-radius: 50%;
+            border-top-color: #007bff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm"
+        style="background: linear-gradient(90deg, #1e3c72 0%, #2a5298 100%);">
+        <div class="container">
+            <a class="navbar-brand fw-bold fs-3" href="/araclar">
+                <i class="fa-solid fa-road me-2 text-info"></i>RotaCar
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" href="/admin/panel"><i class="fa-solid fa-gauge me-1"></i> Admin
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('PERSONEL')">
+                        <a class="nav-link" href="/personel/panel"><i class="fa-solid fa-gauge me-1"></i>
+                            Panel</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/arac-ekle"><i class="fa-solid fa-plus me-1"></i> Araç Ekle</a>
+                    </li>
+
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/araclar"><i class="fa-solid fa-list me-1"></i> Araçlar</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/kiralamalarim"><i class="fa-solid fa-clock-rotate-left me-1"></i>
+                            Kiralamalarım</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!hasAnyRole('ADMIN', 'PERSONEL')">
+                        <a class="nav-link" href="/ofisler"><i class="fa-solid fa-building me-1"></i> Ofislerimiz</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/ai-asistan">
+                            <i class="fa-solid fa-robot"></i> AI Asistan
+                        </a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <a href="/cikis" class="btn btn-light btn-sm text-primary fw-bold">Çıkış Yap</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <h2 class="text-center mb-4">
+            <i class="fa-solid fa-robot text-primary"></i> AI Asistan
+        </h2>
+
+        <div class="row">
+            <!-- Araç Önerisi -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fa-solid fa-car-side"></i> Araç Önerisi</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">AI'ya ihtiyacınızı anlatın, size en uygun araç tipini önersin!</p>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">İsteğinizi Yazın</label>
+                            <textarea id="oneriIstegi" class="form-control" rows="3"
+                                placeholder="Örn: 5 günlüğüne aile için uygun, geniş bagajlı araç öner"></textarea>
+                        </div>
+                        <button onclick="aracOner()" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Öner
+                        </button>
+                        <div id="oneriSonuc" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Müşteri Destek Asistanı -->
+            <div class="col-md-6 mb-4">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fa-solid fa-headset"></i> Müşteri Destek Asistanı</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Kiralama ile ilgili sorularınızı sorun!</p>
+                        <div class="chat-container" id="chatMesajlari">
+                            <div class="ai-message chat-message">
+                                <strong>AI Asistan:</strong> Merhaba! Size nasıl yardımcı olabilirim? Depozito, gecikme,
+                                sigorta gibi konularda soru sorabilirsiniz.
+                            </div>
+                        </div>
+                        <div class="input-group mt-3">
+                            <input type="text" id="destekSorusu" class="form-control"
+                                placeholder="Örn: Depozito ne kadar?" onkeypress="if(event.key==='Enter') soruSor()">
+                            <button class="btn btn-success" onclick="soruSor()">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Örnek Sorular -->
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fa-solid fa-lightbulb"></i> Örnek Sorular</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Araç Önerisi:</h6>
+                        <ul>
+                            <li onclick="document.getElementById('oneriIstegi').value='5 günlüğüne aile için uygun araç öner'; aracOner()"
+                                style="cursor:pointer" class="text-primary">5 günlüğüne aile için uygun araç öner</li>
+                            <li onclick="document.getElementById('oneriIstegi').value='Ekonomik ve yakıt tasarruflu araç istiyorum'; aracOner()"
+                                style="cursor:pointer" class="text-primary">Ekonomik ve yakıt tasarruflu araç istiyorum
+                            </li>
+                            <li onclick="document.getElementById('oneriIstegi').value='Lüks ve konforlu bir araç öner'; aracOner()"
+                                style="cursor:pointer" class="text-primary">Lüks ve konforlu bir araç öner</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Destek Soruları:</h6>
+                        <ul>
+                            <li onclick="document.getElementById('destekSorusu').value='Depozito ne kadar?'; soruSor()"
+                                style="cursor:pointer" class="text-success">Depozito ne kadar?</li>
+                            <li onclick="document.getElementById('destekSorusu').value='Gecikme olursa ne olur?'; soruSor()"
+                                style="cursor:pointer" class="text-success">Gecikme olursa ne olur?</li>
+                            <li onclick="document.getElementById('destekSorusu').value='Sigorta dahil mi?'; soruSor()"
+                                style="cursor:pointer" class="text-success">Sigorta dahil mi?</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Araç Önerisi
+        async function aracOner() {
+            const istekInput = document.getElementById('oneriIstegi');
+            const sonucDiv = document.getElementById('oneriSonuc');
+            const istek = istekInput.value.trim();
+
+            if (!istek) {
+                sonucDiv.innerHTML = '<div class="alert alert-warning">Lütfen bir istek yazın!</div>';
+                return;
+            }
+
+            // Loading göster
+            sonucDiv.innerHTML = '<div class="text-center"><div class="loading"></div> AI düşünüyor...</div>';
+
+            try {
+                const response = await fetch('/api/ai/oner', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ istek: istek })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    sonucDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong><i class="fa-solid fa-robot"></i> AI Önerisi:</strong><br>
+                            ${data.oneri.replace(/\n/g, '<br>')}
+                        </div>
+                    `;
+                } else {
+                    sonucDiv.innerHTML = `<div class="alert alert-danger">Hata: ${data.hata || 'API hatası'}</div>`;
+                }
+            } catch (error) {
+                sonucDiv.innerHTML = `<div class="alert alert-danger">Bağlantı hatası: ${error.message}</div>`;
+            }
+        }
+
+        // Destek Sorusu
+        async function soruSor() {
+            const soruInput = document.getElementById('destekSorusu');
+            const chatDiv = document.getElementById('chatMesajlari');
+            const soru = soruInput.value.trim();
+
+            if (!soru) return;
+
+            // Kullanıcı mesajını ekle
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-message user-message';
+            userMsg.innerHTML = `<strong>Siz:</strong> ${soru}`;
+            chatDiv.appendChild(userMsg);
+
+            // Input'u temizle
+            soruInput.value = '';
+
+            // Loading ekle
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'chat-message ai-message';
+            loadingMsg.innerHTML = '<div class="loading"></div> AI düşünüyor...';
+            chatDiv.appendChild(loadingMsg);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+
+            try {
+                const response = await fetch('/api/ai/destek', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ soru: soru })
+                });
+
+                const data = await response.json();
+
+                // Loading'i kaldır
+                loadingMsg.remove();
+
+                // AI cevabını ekle
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'chat-message ai-message';
+                if (response.ok) {
+                    aiMsg.innerHTML = `<strong>AI Asistan:</strong> ${data.cevap.replace(/\n/g, '<br>')}`;
+                } else {
+                    aiMsg.innerHTML = `<strong>Hata:</strong> ${data.hata || 'API hatası'}`;
+                }
+                chatDiv.appendChild(aiMsg);
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+
+            } catch (error) {
+                loadingMsg.remove();
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'chat-message ai-message';
+                errorMsg.innerHTML = `<strong>Hata:</strong> ${error.message}`;
+                chatDiv.appendChild(errorMsg);
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }
+        }
+    </script>
+</body>
+
+</html>

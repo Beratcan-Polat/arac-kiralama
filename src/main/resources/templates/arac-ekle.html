@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Yeni Araç Ekle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container mt-5 mb-5" style="max-width: 700px;">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Yeni Araç Ekle</h4>
+            </div>
+            <div class="card-body">
+
+                <!-- Hata Mesajı Gösterimi -->
+                <div th:if="${hata}" class="alert alert-danger alert-dismissible fade show">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i> <span th:text="${hata}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <form th:action="@{/arac-ekle}" th:object="${arac}" method="post">
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Marka</label>
+                            <input type="text" th:field="*{marka}" class="form-control" placeholder="Örn: Fiat"
+                                required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Model</label>
+                            <input type="text" th:field="*{model}" class="form-control" placeholder="Örn: Egea"
+                                required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-bold">Plaka</label>
+                            <input type="text" th:field="*{plaka}" class="form-control" placeholder="Örn: 34 ABC 123"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Alış Noktası (Gruplu - Çoklu Seçim) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Alış Noktaları (Birden fazla seçebilirsiniz)</label>
+                        <select th:field="*{alisNoktasi}" class="form-select" size="10" multiple required>
+
+                            <optgroup label="İstanbul">
+                                <option value="İstanbul Havalimanı">İstanbul Havalimanı</option>
+                                <option value="İstanbul Sabiha Gökçen Havalimanı">İstanbul Sabiha Gökçen Havalimanı
+                                </option>
+                                <option value="İstanbul Ataşehir Watergarden AVM">İstanbul Ataşehir Watergarden AVM
+                                </option>
+                                <option value="İstanbul Maltepe Park AVM">İstanbul Maltepe Park AVM</option>
+                                <option value="İstanbul Kadıköy">İstanbul Kadıköy</option>
+                            </optgroup>
+
+                            <optgroup label="Ankara">
+                                <option value="Ankara Esenboğa Havalimanı">Ankara Esenboğa Havalimanı</option>
+                                <option value="Ankara YHT Gar">Ankara YHT Gar</option>
+                                <option value="Ankara Atlantis AVM">Ankara Atlantis AVM</option>
+                                <option value="Ankara Kızılay">Ankara Kızılay</option>
+                            </optgroup>
+
+                            <optgroup label="İzmir">
+                                <option value="İzmir Adnan Menderes Havalimanı">İzmir Adnan Menderes Havalimanı</option>
+                                <option value="İzmir Mavibahçe AVM">İzmir Mavibahçe AVM</option>
+                                <option value="İzmir Otogar">İzmir Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Adana">
+                                <option value="Adana Şakirpaşa Havalimanı">Adana Şakirpaşa Havalimanı</option>
+                                <option value="Adana Optimum AVM">Adana Optimum AVM</option>
+                                <option value="Adana Otogar">Adana Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Adıyaman">
+                                <option value="Adıyaman Havalimanı">Adıyaman Havalimanı</option>
+                                <option value="Adıyaman Merkez">Adıyaman Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Afyonkarahisar">
+                                <option value="Afyonkarahisar Zafer Havalimanı">Afyonkarahisar Zafer Havalimanı</option>
+                                <option value="Afyonkarahisar Otogar">Afyonkarahisar Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Ağrı">
+                                <option value="Ağrı Havalimanı">Ağrı Havalimanı</option>
+                                <option value="Ağrı Merkez">Ağrı Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Aksaray">
+                                <option value="Aksaray Otogar">Aksaray Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Amasya">
+                                <option value="Amasya Merzifon Havalimanı">Amasya Merzifon Havalimanı</option>
+                                <option value="Amasya Merkez">Amasya Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Antalya">
+                                <option value="Antalya Havalimanı">Antalya Havalimanı</option>
+                                <option value="Antalya Terra City AVM">Antalya Terra City AVM</option>
+                                <option value="Antalya Otogar">Antalya Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Ardahan">
+                                <option value="Ardahan Merkez">Ardahan Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Artvin">
+                                <option value="Artvin Merkez">Artvin Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Aydın">
+                                <option value="Aydın Çıldır Havalimanı">Aydın Çıldır Havalimanı</option>
+                                <option value="Aydın Otogar">Aydın Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Balıkesir">
+                                <option value="Balıkesir Koca Seyit Havalimanı">Balıkesir Koca Seyit Havalimanı</option>
+                                <option value="Balıkesir Otogar">Balıkesir Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Bartın">
+                                <option value="Bartın Merkez">Bartın Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Batman">
+                                <option value="Batman Havalimanı">Batman Havalimanı</option>
+                                <option value="Batman Park AVM">Batman Park AVM</option>
+                            </optgroup>
+
+                            <optgroup label="Bayburt">
+                                <option value="Bayburt Merkez">Bayburt Merkez</option>
+                            </optgroup>
+
+                            <optgroup label="Bilecik">
+                                <option value="Bilecik Otogar">Bilecik Otogar</option>
+                            </optgroup>
+
+                            <optgroup label="Bingöl">
+                                <option value="Bingöl Havalimanı">Bingöl Havalimanı</option>
+                                <option value="Bingöl Merkez">Bingöl Merkez</option>
+                            </optgroup>
+
+                            <!-- Devam eden iller kısaltıldı. Tüm 81 il için implementation_plan.md dosyasına bakın -->
+
+                        </select>
+                        <small class="text-muted">Ctrl/Cmd tuşu ile birden fazla nokta seçebilirsiniz</small>
+                    </div>
+
+                    <!-- İl bilgisi arka planda saklanacak (hidden) -->
+                    <input type="hidden" th:field="*{il}" value="İstanbul">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Günlük Kiralama Ücreti (TL)</label>
+                        <input type="number" step="0.01" th:field="*{gunlukFiyat}" class="form-control"
+                            placeholder="1500.00" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Yakıt Tipi</label>
+                            <select th:field="*{yakitTipi}" class="form-select">
+                                <option value="Benzin">Benzin</option>
+                                <option value="Dizel">Dizel</option>
+                                <option value="Elektrik">Elektrik</option>
+                                <option value="Hibrit">Hibrit</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Vites Tipi</label>
+                            <select th:field="*{vitesTipi}" class="form-select">
+                                <option value="Manuel">Manuel</option>
+                                <option value="Otomatik">Otomatik</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Araç Sınıfı</label>
+                            <select th:field="*{aracSinifi}" class="form-select" required>
+                                <option value="" disabled selected>Seçiniz...</option>
+                                <option value="Ekonomi">Ekonomi</option>
+                                <option value="Konfor">Konfor</option>
+                                <option value="Lüks">Lüks</option>
+                                <option value="Prestij">Prestij</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Kasa Tipi</label>
+                            <select th:field="*{kasaTipi}" class="form-select" required>
+                                <option value="" disabled selected>Seçiniz...</option>
+                                <option value="Sedan">Sedan</option>
+                                <option value="Hatchback">Hatchback</option>
+                                <option value="SUV">SUV</option>
+                                <option value="Crossover">Crossover</option>
+                                <option value="MPV">MPV</option>
+                                <option value="Cabrio">Cabrio</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="p-3 mb-3 bg-light border rounded">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">Kiralama Koşulları & Limitler</h6>
+
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="small fw-bold">Min. Sürücü Yaşı</label>
+                                <input type="number" th:field="*{minYas}" class="form-control" placeholder="21"
+                                    required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="small fw-bold">Min. Genç Yaş</label>
+                                <input type="number" th:field="*{minGencYas}" class="form-control" placeholder="19">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="small fw-bold">Min. Ehliyet Yılı</label>
+                                <input type="number" th:field="*{minEhliyetYili}" class="form-control" placeholder="2"
+                                    required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="small fw-bold">Min. Genç Ehliyet</label>
+                                <input type="number" th:field="*{minGencEhliyetYili}" class="form-control"
+                                    placeholder="1">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="small fw-bold">Günlük KM Limiti</label>
+                                <div class="input-group">
+                                    <input type="number" th:field="*{gunlukKmLimiti}" class="form-control"
+                                        placeholder="400" required>
+                                    <span class="input-group-text">KM</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="small fw-bold">Teminat Tutarı</label>
+                                <div class="input-group">
+                                    <input type="number" th:field="*{teminatTutari}" class="form-control"
+                                        placeholder="2000" required>
+                                    <span class="input-group-text">TL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Resim URL (İsteğe Bağlı)</label>
+                        <input type="text" th:field="*{resimUrl}" class="form-control" placeholder="https://...">
+                    </div>
+
+
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">Aracı Kaydet</button>
+                        <a href="/araclar" class="btn btn-secondary">İptal</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
