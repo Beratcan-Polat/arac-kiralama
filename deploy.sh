@@ -19,14 +19,11 @@ pkill -f 'uvicorn' || echo "Python süreci yok."
 # 4. Python Servisini Başlat
 echo "Python Mail Servisi başlatılıyor..."
 cd mail-service
-# Venv yoksa oluştur (Garanti olsun)
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install fastapi uvicorn aiosmtplib "pydantic[email]" email-validator python-dotenv
-else
-    source venv/bin/activate
-fi
+# Venv temiz kurulum
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi uvicorn aiosmtplib "pydantic[email]" email-validator python-dotenv
 
 nohup uvicorn main:app --host 0.0.0.0 --port 8000 > ../mail.log 2>&1 &
 cd ..
