@@ -11,12 +11,28 @@ git pull origin main
 echo "Java Derleniyor..."
 mvn clean package -DskipTests
 
-# 3. Eski Java Sürecini Bul ve Öldür (pidof veya pgrep ile)
-echo "Eski süreç durduruluyor..."
-pkill -f 'java -jar' || echo "Çalışan java süreci bulunamadı."
+# 3. Eski Süreçleri Durdur
+echo "Eski süreçler durduruluyor..."
+pkill -f 'java -jar' || echo "Java süreci yok."
+pkill -f 'uvicorn' || echo "Python süreci yok."
 
-# 4. Yeni Java Sürecini Başlat
-echo "Yeni sürüm başlatılıyor..."
+# 4. Python Servisini Başlat
+echo "Python Mail Servisi başlatılıyor..."
+cd mail-service
+# Venv yoksa oluştur (Garanti olsun)
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install fastapi uvicorn aiosmtplib pydantic python-dotenv
+else
+    source venv/bin/activate
+fi
+
+nohup uvicorn main:app --host 0.0.0.0 --port 8000 > ../mail.log 2>&1 &
+cd ..
+
+# 5. Yeni Java Sürecini Başlat
+echo "Yeni Java sürümü başlatılıyor..."
 nohup java -jar target/*.jar > app.log 2>&1 &
 
 echo "--- GÜNCELLEME TAMAMLANDI ---"
