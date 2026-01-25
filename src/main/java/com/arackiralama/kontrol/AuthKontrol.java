@@ -19,12 +19,20 @@ public class AuthKontrol {
     }
 
     @PostMapping("/kayit")
-    public ResponseEntity<GirisYaniti> kayitOl(@RequestBody KayitIstegi istek) {
-        return ResponseEntity.ok(authServis.kayitOl(istek));
+    public ResponseEntity<?> kayitOl(@RequestBody KayitIstegi istek) {
+        try {
+            return ResponseEntity.ok(authServis.kayitOl(istek));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @PostMapping("/giris")
-    public ResponseEntity<GirisYaniti> girisYap(@RequestBody GirisIstegi istek) {
-        return ResponseEntity.ok(authServis.girisYap(istek));
+    public ResponseEntity<?> girisYap(@RequestBody GirisIstegi istek) {
+        try {
+            return ResponseEntity.ok(authServis.girisYap(istek));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
