@@ -81,3 +81,7 @@ google-services.json
 GoogleService-Info.plist
 *.keystore
 *.jks
+
+# Veri tabani dokumu ve ek yapilandirma (asla commit edilmez)
+*.sql
+application-*.yml
