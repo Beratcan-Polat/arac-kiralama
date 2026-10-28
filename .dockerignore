@@ -1,0 +1,15 @@
+.git
+.runtime
+target
+arac-kiralama-mobil
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/.env
+**/.env.*
+**/*.sqlite3*
+src/main/resources/application.properties
+src/main/resources/application-dev.properties
+src/main/resources/application-prod.properties
+*.log

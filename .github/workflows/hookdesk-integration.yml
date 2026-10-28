@@ -1,0 +1,29 @@
+name: HookDesk entegrasyonu
+on:
+  push:
+    branches: [feature/hookdesk-integration]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  java:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - run: mvn -B test
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: mail-service/requirements*.txt
+      - run: python -m pip install -r mail-service/requirements-test.txt
+      - run: python -m pytest mail-service/tests -q

@@ -1,0 +1,176 @@
+name: hookdesk-rental
+x-hookdesk: &hookdesk
+  image: hookdesk-rental:local
+  build:
+    context: ${HOOKDESK_PATH:-../../../HookDesk}
+    dockerfile: infra/docker/backend.Dockerfile
+    target: base
+  environment: &hookdesk-env
+    APP_NAME: HookDesk Rental Demo
+    APP_ENV: local
+    APP_DEBUG: 'false'
+    APP_KEY: ${DEMO_APP_KEY:?Run node infra/hookdesk/demo.mjs setup}
+    APP_URL: http://127.0.0.1:8090
+    FRONTEND_URL: http://127.0.0.1:8090
+    HOOKDESK_RENTAL_DEMO: 'true'
+    HOOKDESK_API_KEY: ${HOOKDESK_API_KEY:?Missing demo key}
+    HOOKDESK_SIGNING_SECRET: ${HOOKDESK_SIGNING_SECRET:?Missing signing secret}
+    HOOKDESK_DEMO_ENDPOINT_ID: ${HOOKDESK_DEMO_ENDPOINT_ID:?Missing endpoint}
+    DEMO_DASHBOARD_PASSWORD: ${DEMO_DASHBOARD_PASSWORD:?Missing dashboard password}
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: hookdesk_rental_demo
+    DB_USERNAME: hookdesk_demo
+    DB_PASSWORD: ${HOOKDESK_DB_PASSWORD:?Missing database password}
+    QUEUE_CONNECTION: redis
+    CACHE_STORE: redis
+    SESSION_DRIVER: database
+    SESSION_COOKIE: hookdesk_rental_session
+    SESSION_SECURE_COOKIE: 'false'
+    SANCTUM_STATEFUL_DOMAINS: 127.0.0.1:8090
+    REDIS_CLIENT: predis
+    REDIS_HOST: redis
+    REDIS_QUEUE_RETRY_AFTER: 60
+    RECEIVER_URL: http://receiver:8080
+    MAIL_MAILER: smtp
+    MAIL_HOST: mailpit
+    MAIL_PORT: 1025
+    MAIL_FROM_ADDRESS: hello@hookdesk.test
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: warning
+  volumes:
+    - ./hookdesk-fixture.php:/srv/backend/rental-fixture.php:ro
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+  networks: [demo]
+  mem_limit: 256m
+x-mail: &mail
+  image: rental-mail:local
+  build:
+    context: ../..
+    dockerfile: infra/hookdesk/mail.Dockerfile
+  environment: &mail-env
+    MAIL_HOST: mailpit
+    MAIL_PORT: 1025
+    MAIL_FROM: rezervasyon@rental.hookdesk.test
+    MAIL_START_TLS: 'false'
+    MAIL_USE_TLS: 'false'
+  networks: [demo]
+  mem_limit: 128m
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: hookdesk_rental_demo
+      POSTGRES_USER: hookdesk_demo
+      POSTGRES_PASSWORD: ${HOOKDESK_DB_PASSWORD}
+    volumes: [hookdesk_data:/var/lib/postgresql]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U hookdesk_demo -d hookdesk_rental_demo']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [demo]
+    mem_limit: 256m
+  redis:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [demo]
+    mem_limit: 96m
+  app:
+    <<: *hookdesk
+  worker:
+    <<: *hookdesk
+    command: php artisan queue:work redis --queue=deliveries,default --timeout=20 --tries=1 --sleep=1
+    mem_limit: 192m
+  scheduler:
+    <<: *hookdesk
+    command: php artisan schedule:work
+    mem_limit: 128m
+  gateway:
+    image: hookdesk-rental-gateway:local
+    build:
+      context: ${HOOKDESK_PATH:-../../../HookDesk}
+      dockerfile: infra/docker/gateway.Dockerfile
+    environment: { DOMAIN: ':80' }
+    ports: ['127.0.0.1:8090:80']
+    depends_on: [app]
+    networks: [demo, published]
+    mem_limit: 64m
+  mysql:
+    image: mysql:8.0
+    command: --innodb-buffer-pool-size=64M --performance-schema=OFF --max-connections=25
+    environment:
+      MYSQL_DATABASE: rental_hookdesk_demo
+      MYSQL_USER: rental_demo
+      MYSQL_PASSWORD: ${RENTAL_DB_PASSWORD:?Missing rental database password}
+      MYSQL_ROOT_PASSWORD: ${RENTAL_DB_ROOT_PASSWORD:?Missing root password}
+    volumes: [rental_data:/var/lib/mysql]
+    healthcheck:
+      test: ['CMD-SHELL', 'MYSQL_PWD=$$MYSQL_PASSWORD mysql -u $$MYSQL_USER -D $$MYSQL_DATABASE -e "SELECT 1" >/dev/null']
+      interval: 3s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+    networks: [demo]
+    mem_limit: 384m
+  rental:
+    image: rental-hookdesk:local
+    build:
+      context: ../..
+      dockerfile: infra/hookdesk/rental.Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: hookdesk,hookdesk-demo
+      HOOKDESK_ENABLED: 'true'
+      HOOKDESK_BASE_URL: http://gateway
+      HOOKDESK_API_KEY: ${HOOKDESK_API_KEY}
+      RENTAL_DB_PASSWORD: ${RENTAL_DB_PASSWORD}
+      RENTAL_JWT_SECRET: ${RENTAL_JWT_SECRET:?Missing JWT secret}
+      RENTAL_DEMO_PASSWORD: ${RENTAL_DEMO_PASSWORD:?Missing customer password}
+    ports: ['127.0.0.1:8091:8080']
+    depends_on:
+      mysql: { condition: service_healthy }
+    networks: [demo, published]
+    mem_limit: 512m
+  receiver:
+    <<: *mail
+    environment:
+      <<: *mail-env
+      HOOKDESK_ENABLED: 'true'
+      HOOKDESK_SIGNING_SECRET: ${HOOKDESK_SIGNING_SECRET}
+      HOOKDESK_RECEIPTS_DB: /data/receipts.sqlite3
+      HOOKDESK_DEMO: 'true'
+      HOOKDESK_DEMO_ENDPOINT_ID: ${HOOKDESK_DEMO_ENDPOINT_ID}
+      HOOKDESK_DEMO_FAILURES: ${HOOKDESK_DEMO_FAILURES:-0}
+    volumes: [receipts:/data]
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  mail-legacy:
+    <<: *mail
+    environment:
+      <<: *mail-env
+      HOOKDESK_ENABLED: 'false'
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ['127.0.0.1:8095:8025']
+    networks: [demo, published]
+    mem_limit: 96m
+networks:
+  demo: { internal: true }
+  published: {}
+volumes:
+  hookdesk_data: {}
+  redis_data: {}
+  rental_data: {}
+  receipts: {}
