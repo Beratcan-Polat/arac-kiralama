@@ -85,3 +85,9 @@ GoogleService-Info.plist
 # Veri tabani dokumu ve ek yapilandirma (asla commit edilmez)
 *.sql
 application-*.yml
+
+# Yerel HookDesk demosunun anahtarları, hesapları ve raporları
+.runtime/
+mail-service/*.sqlite3*
+.pytest_cache/
+!src/test/resources/application.properties

@@ -1,6 +1,7 @@
 package com.arackiralama.servis;
 
 import com.arackiralama.dto.KiralamaIstegi;
+import com.arackiralama.hookdesk.HookDeskOutbox;
 import com.arackiralama.model.Arac;
 import com.arackiralama.model.Kiralama;
 import com.arackiralama.model.Kullanici;
@@ -23,14 +24,16 @@ public class KiralamaServis {
     private final AracRepository aracRepository;
     private final KullaniciRepository kullaniciRepository;
     private final BakimServis bakimServis;
+    private final HookDeskOutbox hookDeskOutbox;
 
     public KiralamaServis(KiralamaRepository kiralamaRepository, MailServis mailServis, AracRepository aracRepository,
-            KullaniciRepository kullaniciRepository, BakimServis bakimServis) {
+            KullaniciRepository kullaniciRepository, BakimServis bakimServis, HookDeskOutbox hookDeskOutbox) {
         this.kiralamaRepository = kiralamaRepository;
         this.mailServis = mailServis;
         this.aracRepository = aracRepository;
         this.kullaniciRepository = kullaniciRepository;
         this.bakimServis = bakimServis;
+        this.hookDeskOutbox = hookDeskOutbox;
     }
 
     // Yeni Kiralama Yapma Metodu
@@ -86,6 +89,12 @@ public class KiralamaServis {
         kiralama.setDurum("REZERVE");
 
         Kiralama kaydedilenKiralama = kiralamaRepository.save(kiralama);
+
+        if (hookDeskOutbox.isEnabled()) {
+            // Persist together with the reservation; the dispatcher sends only after commit.
+            hookDeskOutbox.enqueue(kaydedilenKiralama);
+            return kaydedilenKiralama;
+        }
 
         // MAIL GÖNDERİMİ
         try {
