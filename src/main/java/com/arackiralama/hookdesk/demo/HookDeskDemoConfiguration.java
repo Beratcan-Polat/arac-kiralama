@@ -38,7 +38,7 @@ public class HookDeskDemoConfiguration {
                 vehicle.setModel("Clio");
                 vehicle.setPlaka("02 HD 001");
                 vehicle.setIl("Adıyaman");
-                vehicle.setAlisNoktasi("Merkez ofis");
+                vehicle.setAlisNoktasi("Adıyaman Havalimanı");
                 vehicle.setGunlukFiyat(new BigDecimal("1500.00"));
                 vehicle.setYakitTipi("Benzin");
                 vehicle.setVitesTipi("Otomatik");
@@ -54,6 +54,14 @@ public class HookDeskDemoConfiguration {
                 vehicle.setDurum(AracDurum.MUSAIT);
                 vehicles.save(vehicle);
             }
+            // Keep existing isolated demos usable through the customer's location selector.
+            vehicles.findAll().stream()
+                    .filter(vehicle -> "02 HD 001".equals(vehicle.getPlaka()))
+                    .filter(vehicle -> "Merkez ofis".equals(vehicle.getAlisNoktasi()))
+                    .forEach(vehicle -> {
+                        vehicle.setAlisNoktasi("Adıyaman Havalimanı");
+                        vehicles.save(vehicle);
+                    });
         });
     }
 }

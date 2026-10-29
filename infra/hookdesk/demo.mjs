@@ -61,7 +61,7 @@ async function ready() {
   await waitFor('Araç kiralama', async () => (await fetch('http://127.0.0.1:8091/giris', { signal: AbortSignal.timeout(3000) })).ok)
 }
 function mysql(query) {
-  return compose(['exec', '-T', 'mysql', 'sh', '-c', 'MYSQL_PWD="$MYSQL_PASSWORD" exec mysql -u "$MYSQL_USER" "$MYSQL_DATABASE" -N -B -e "$1"', 'sh', query])
+  return compose(['exec', '-T', 'mysql', 'sh', '-c', 'MYSQL_PWD="$MYSQL_PASSWORD" exec mysql --default-character-set=utf8mb4 -u "$MYSQL_USER" "$MYSQL_DATABASE" -N -B -e "$1"', 'sh', query])
 }
 function snapshot() { return JSON.parse(compose(['exec', '-T', 'app', 'php', 'rental-fixture.php', 'status'])) }
 async function mailCount() {
@@ -80,12 +80,18 @@ async function smoke() {
   if (!cookie || login.status !== 302 || login.headers.get('location')?.includes('hata')) throw new Error('Demo müşteri girişi başarısız')
   const vehicleId = Number(mysql('SELECT id FROM araclar WHERE plaka="02 HD 001" LIMIT 1'))
   if (!vehicleId) throw new Error('Demo aracı bulunamadı')
+  const pickup = 'Adıyaman Havalimanı'
+  const home = await fetch('http://127.0.0.1:8091/araclar', { headers: { Cookie: cookie }, signal: AbortSignal.timeout(10000) })
+  if (!home.ok || !(await home.text()).includes(`value="${pickup}"`)) throw new Error('Demo alış noktası müşteri formunda bulunamadı')
   const maxDate = mysql('SELECT COALESCE(MAX(iade_tarihi),CURDATE()) FROM kiralamalar')
   let day = new Date(maxDate + 'T12:00:00Z')
   if (!Number.isFinite(day.getTime())) throw new Error('Demo tarih bilgisi geçersiz')
   async function reserve() {
     day.setUTCDate(day.getUTCDate() + 2); const start = day.toISOString().slice(0, 10)
     day.setUTCDate(day.getUTCDate() + 2); const end = day.toISOString().slice(0, 10)
+    const search = new URLSearchParams({ alisNoktasi: pickup, alisTarihi: start, iadeTarihi: end, alisSaati: '10:00', iadeSaati: '10:00' })
+    const listing = await fetch('http://127.0.0.1:8091/araclar?' + search, { headers: { Cookie: cookie }, signal: AbortSignal.timeout(10000) })
+    if (!listing.ok || !(await listing.text()).includes(`/kiralama-yap/${vehicleId}?`)) throw new Error('Demo aracı müşteri arama sonuçlarında kiralanabilir değil')
     const response = await fetch('http://127.0.0.1:8091/kiralama-yap', { method: 'POST', redirect: 'manual', headers: { Cookie: cookie },
       body: new URLSearchParams({ aracId: String(vehicleId), alisTarihi: start, iadeTarihi: end, alisSaati: '10:00', iadeSaati: '10:00', odemeDurumu: 'OFISTE' }) })
     if (response.status !== 302 || !response.headers.get('location')?.includes('kiralamalarim?basarili')) throw new Error('Rezervasyon kaydedilemedi')

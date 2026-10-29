@@ -36,7 +36,7 @@ node infra/hookdesk/demo.mjs smoke
 - Demo e-posta kutusu: <http://127.0.0.1:8095>
 - Hesaplar ve rastgele parolalar: `.runtime/hookdesk/giris-bilgileri.txt` — Git'e eklenmez.
 
-Araç kiralamaya demo müşteriyle girip Renault Clio için birbirleriyle çakışmayan tarihlerde **Ofiste Öde** seçeneğiyle rezervasyon oluştururum. HookDesk panelinde **Araç Kiralama Demosu → Rezervasyon bildirimleri → Olaylar** üzerinden `rental.created` olayını ve teslimat denemelerini görebilirim. Mailpit gerçek alıcıya e-posta göndermez; deneme iletisini yerelde tutar.
+Araç kiralamaya demo müşteriyle girip alış noktası olarak **Adıyaman Havalimanı** seçerim. Birbirleriyle çakışmayan tarihleri girip **Araçları Keşfet** düğmesine basınca Renault Clio listelenir. **Hemen Kirala → Ofiste Öde** adımlarıyla rezervasyonu oluştururum. Müşteri ekranı arama yapılmadan araç listelemez; diğer alış noktalarında bu demo aracı bulunmaz. HookDesk panelinde **Araç Kiralama Demosu → Rezervasyon bildirimleri → Olaylar** üzerinden `rental.created` olayını ve teslimat denemelerini görebilirim. Mailpit gerçek alıcıya e-posta göndermez; deneme iletisini yerelde tutar.
 
 ```sh
 node infra/hookdesk/demo.mjs status
@@ -44,7 +44,7 @@ node infra/hookdesk/demo.mjs stop
 node infra/hookdesk/demo.mjs start
 ```
 
-`stop` verileri silmez. `smoke` üç gerçek rezervasyon oluşturur: normal teslimat, alıcı kesintisinden kurtarma ve HookDesk kapalıyken outbox'ta bekleyen olayın kurtarılması. Kasıtlı olarak durdurduğu servisleri hata durumunda da yeniden açar. Sonuç `.runtime/hookdesk/smoke-report.json` dosyasına kaydedilir. Testi çalıştırırken aynı demoda elle rezervasyon oluşturulmamalıdır; e-posta sayısı da doğrulanır.
+`stop` verileri silmez. `smoke` önce alış noktasının müşteri formunda bulunduğunu ve seçilen tarihlerde aracın arama sonucunda kiralanabildiğini doğrular. Ardından üç gerçek rezervasyon oluşturur: normal teslimat, alıcı kesintisinden kurtarma ve HookDesk kapalıyken outbox'ta bekleyen olayın kurtarılması. Kasıtlı olarak durdurduğu servisleri hata durumunda da yeniden açar. Sonuç `.runtime/hookdesk/smoke-report.json` dosyasına kaydedilir. Testi çalıştırırken aynı demoda elle rezervasyon oluşturulmamalıdır; e-posta sayısı da doğrulanır.
 
 ## İzolasyon ve güvenlik
 
