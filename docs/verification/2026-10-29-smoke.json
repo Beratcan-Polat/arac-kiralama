@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-29T06:30:42.822Z",
+  "scenarios": [
+    {
+      "name": "reservation_to_email",
+      "rental_id": 4,
+      "event_id": "01M635N3VVWF388G1QNKYW5WWG",
+      "passed": true
+    },
+    {
+      "name": "receiver_outage_recovery",
+      "rental_id": 5,
+      "event_id": "01M635N80JRJQ0Q7M95CZS1GBF",
+      "attempts": 2,
+      "passed": true
+    },
+    {
+      "name": "hookdesk_outage_outbox_recovery",
+      "rental_id": 6,
+      "event_id": "01M635P8NAPZT5HSHRHPMWBJFJ",
+      "passed": true
+    }
+  ],
+  "mail_count_delta": 3
+}

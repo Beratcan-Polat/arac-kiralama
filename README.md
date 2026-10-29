@@ -1,6 +1,6 @@
 # Araç Kiralama Sistemi
 
-Bu dalda rezervasyon onayları için [HookDesk](https://github.com/Beratcan-Polat/HookDesk) entegrasyonunu geliştiriyorum. Java tarafında kalıcı outbox, Python tarafında imzalı e-posta alıcısı ve testlerini ekledim. Ayrı Docker demosunun kurulumu ve kesinti senaryoları [entegrasyon belgesinde](docs/hookdesk-integration.md); uçtan uca Docker doğrulaması henüz tamamlanmadı. Ana uygulama sürümü `main` dalında duruyor.
+Bu dalda rezervasyon onaylarını [HookDesk](https://github.com/Beratcan-Polat/HookDesk) üzerinden gönderen bir entegrasyon ekledim. Java tarafında kalıcı outbox, Python tarafında imzalı e-posta alıcısı kullandım; teslimatı ve iki servisin kesintiden toparlanmasını Docker üzerinde test ettim. Kurulum, kullanım ve test sonuçları [entegrasyon belgesinde](docs/hookdesk-integration.md). Ana uygulama sürümü `main` dalında duruyor.
 
 Bir araç kiralama şirketinin günlük işini uçtan uca yürüten bir sistem: araç filosunun
 tutulması, müşterinin araç arayıp rezervasyon yapması ve ödemesi, personelin aracı teslim

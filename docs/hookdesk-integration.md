@@ -64,7 +64,11 @@ Entegrasyonda GitHub sürümü temel alındı. Yerel klasör ve GitHub `main` de
 
 ## Testler
 
-28 Ekim 2026: Java tarafında 17, Python tarafında 38 test geçti. Docker uçtan uca senaryoları henüz çalıştırılamadı: ilk imaj derlemesi sırasında Windows sistem diskinde boş alan tükendi ve derleme durduruldu. Aşağıdaki smoke komutu ve demo profili bu doğrulama tamamlanana kadar geliştirme aşamasındadır. `setup` Windows kullanıcı diskinde 2 GiB'dan az alan varsa başlamaz; indirilecek imajlar ve derleme önbelleği için ayrıca alan gerekir.
+29 Ekim 2026'da 17 Java testi, 38 Python testi ve üç Docker entegrasyon senaryosunu doğruladım. Yerel [smoke raporu](verification/2026-10-29-smoke.json), normal teslimat ve iki kesintiden kurtarma için üç yeni e-posta kaydedildiğini gösteriyor. Alıcı kesintisi senaryosunda teslimat ikinci denemede tamamlandı. HookDesk kapalıyken rezervasyon kaydedildi; outbox başarısız kabul denemesinden sonra bekleyen durumda korundu ve servis açılınca teslim edildi. Derlenmiş frontend, CSRF korumalı demo panel girişi ve çalışma alanına erişim de yerelde doğrulandı.
+
+GitHub Actions'ta Java, Python ve Docker entegrasyon işleri ayrı çalışır. Docker işi HookDesk'in sabit bir commit'ini kullanır, aynı üç smoke senaryosunu çalıştırır ve yalnızca sonuç JSON'unu artifact olarak yükler; hesaplar ve anahtarlar rapora eklenmez. [CI doğrulaması](https://github.com/Beratcan-Polat/arac-kiralama/actions/runs/40828667967).
+
+Kesinti testinde yalnızca `attempt_count` artışını beklemek yeterli değildir: sayaç HTTP isteğinden önce artar. Test, başarısız deneme kaydedildikten sonra `PENDING`, hata kodu ve henüz kabul edilmemiş olay koşullarını tek sorguda gözlemler. Böylece devam eden bir isteği tamamlanmış denemeyle karıştırmaz.
 
 ```sh
 mvn -B test
