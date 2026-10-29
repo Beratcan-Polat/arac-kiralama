@@ -27,3 +27,39 @@ jobs:
           cache-dependency-path: mail-service/requirements*.txt
       - run: python -m pip install -r mail-service/requirements-test.txt
       - run: python -m pytest mail-service/tests -q
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: rental
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: rental
+      - uses: actions/checkout@v4
+        with:
+          repository: Beratcan-Polat/HookDesk
+          ref: 8e6e8f9eaf3b548d80f1d934413f15cf254db129
+          path: HookDesk
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build and start isolated demo
+        run: node infra/hookdesk/demo.mjs setup
+      - name: Verify reservation and outage recovery
+        run: node infra/hookdesk/demo.mjs smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rental-integration-report
+          path: rental/.runtime/hookdesk/smoke-report.json
+          if-no-files-found: ignore
+          include-hidden-files: true
+      - name: Remove isolated demo resources
+        if: always()
+        run: |
+          if test -f .runtime/hookdesk/demo.env; then
+            docker compose --project-name hookdesk-rental --env-file .runtime/hookdesk/demo.env -f infra/hookdesk/compose.yaml down --volumes --remove-orphans
+          fi
