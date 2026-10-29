@@ -111,9 +111,9 @@ async function smoke() {
     console.log('PASS: Alıcı kesintisi → yeniden deneme → e-posta')
     compose(['stop', 'app']); appStopped = true
     const third = await reserve()
-    await waitFor('Kalıcı outbox', () => Number(mysql(`SELECT attempt_count FROM hookdesk_outbox WHERE rental_id=${third}`)) >= 1)
-    const state = mysql(`SELECT status FROM hookdesk_outbox WHERE rental_id=${third}`)
-    if (state !== 'PENDING') throw new Error('Kesintide outbox bekleyen durumda korunmadı')
+    // Claim increments attempt_count before HTTP completes. Observe the failed
+    // attempt and its durable retry state together, rather than racing PROCESSING.
+    await waitFor('Kalıcı outbox', () => mysql(`SELECT COUNT(*) FROM hookdesk_outbox WHERE rental_id=${third} AND status='PENDING' AND attempt_count>=1 AND last_error IS NOT NULL AND hookdesk_event_id IS NULL`) === '1')
     compose(['up', '-d', '--no-deps', 'app']); appStopped = false
     await ready(); const thirdEvent = await delivered(third)
     await waitFor('Üçüncü e-posta', async () => (await mailCount()) === baseCount + 3)
